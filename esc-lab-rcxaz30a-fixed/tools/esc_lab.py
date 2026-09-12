@@ -254,7 +254,7 @@ textarea{width:100%;height:120px;background:#090d12;color:#eef4ff;border:1px sol
 <script>
 let current=1500;
 const logEl=document.getElementById('log');
-function log(s){logEl.textContent=new Date().toLocaleTimeString()+"  "+s+"\n"+logEl.textContent.slice(0,5000)}
+function log(s){logEl.textContent=new Date().toLocaleTimeString()+"  "+s+"\\n"+logEl.textContent.slice(0,5000)}
 async function api(url,body={}){
  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  const t=await r.text(); if(!r.ok) throw new Error(t); return t?JSON.parse(t):{};
@@ -273,7 +273,16 @@ function render(s){
  document.getElementById('state').textContent=`signal=${s.signal_enabled?'ON':'OFF'} / CH${s.esc_channel} / ${s.frequency_hz}Hz / ${s.last_action}`;
 }
 document.getElementById('slider').addEventListener('change',e=>pulse(Number(e.target.value)));
-async function refresh(){try{const r=await fetch('/api/state');render(await r.json())}catch(e){}}
+async function refresh(){
+ try{
+   const r=await fetch('/api/state');
+   if(!r.ok) throw new Error('HTTP '+r.status);
+   render(await r.json());
+ }catch(e){
+   document.getElementById('state').textContent='API ERROR: '+e;
+   log('API ERROR '+e);
+ }
+}
 setInterval(refresh,700);refresh();
 </script>
 </body>
