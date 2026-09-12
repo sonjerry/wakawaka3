@@ -7,38 +7,15 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="ignition-off">
-<main class="dash">
-  <header class="topbar">
-    <section class="brand-block">
-      <div class="bowtie-mark"><span>RC</span></div>
-      <div class="brand-copy">
-        <div class="brand-title">TRAILBLAZER RC</div>
-        <div class="brand-sub">DRIVER INFORMATION CENTER</div>
-      </div>
-      <div class="rs-stripe"></div>
-    </section>
-
-    <section class="top-status">
-      <div id="inputStatus" class="top-chip"><span class="dot"></span><b>INPUT</b></div>
-      <div id="linkStatus" class="top-chip bad"><span class="dot"></span><b>CONTROL</b></div>
-      <div id="videoStatus" class="top-chip"><span class="dot"></span><b>VIDEO</b></div>
-      <div id="engineLamp" class="top-chip off"><span class="dot"></span><b>IGN OFF</b></div>
-      <div class="latency-box"><small>RTT</small><strong id="latency">-- ms</strong></div>
-    </section>
-  </header>
-
+<main class="dash clean-layout">
   <section class="camera-frame illuminated">
     <div class="camera-bezel"></div>
     <iframe id="cameraFrame" title="RC camera" allow="autoplay; fullscreen" scrolling="no"></iframe>
     <div class="camera-glass"></div>
     <div class="camera-vignette"></div>
-
-    <div class="camera-topline">
+    <div class="camera-topline clean-camera-topline">
       <div class="live-label"><span class="rec-dot"></span>LIVE</div>
-      <div id="cameraHost" class="camera-host">NO VIDEO</div>
-      <div class="camera-mode">HD · LOW LATENCY</div>
     </div>
-
     <div id="shiftBanner" class="shift-banner"></div>
 
     <div id="offOverlay" class="power-overlay show">
@@ -55,13 +32,9 @@
     </div>
   </section>
 
-  <section class="cluster illuminated">
+  <section class="cluster illuminated clean-cluster">
     <article class="vehicle-card glass-card">
-      <div class="card-head">
-        <span>VEHICLE</span>
-        <b id="steerStatus">STEERING</b>
-      </div>
-
+      <div class="card-head"><span>STEERING</span></div>
       <div class="vehicle-stage">
         <svg viewBox="0 0 260 190" class="car-svg" aria-label="Top view vehicle">
           <defs>
@@ -91,12 +64,9 @@
           <rect x="173" y="118" width="18" height="43" rx="7" class="wheel"/>
           <path d="M104 22 H156" class="headlamp"/>
         </svg>
-        <div class="steer-axis"></div>
       </div>
-
-      <div class="vehicle-readout">
+      <div class="vehicle-readout single-readout">
         <div><small>STEER ANGLE</small><strong id="steerValue">0°</strong></div>
-        <div><small>INPUT</small><strong id="inputMode">WASD</strong></div>
       </div>
     </article>
 
@@ -104,9 +74,6 @@
       <div class="gauge-bezel">
         <div class="gauge-face rpm-gauge exact-gauge">
           <svg class="gauge-svg" viewBox="0 0 240 240" aria-label="RPM gauge">
-            <defs>
-              <filter id="rpmGlow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
             <path class="gauge-base-arc" id="rpmBaseArc"></path>
             <path class="gauge-value-arc rpm-value-arc" id="rpmArc"></path>
             <path class="gauge-red-arc" id="rpmRedArc"></path>
@@ -127,24 +94,8 @@
       </div>
     </article>
 
-    <article class="dic glass-card">
-      <div class="dic-topline">
-        <span>DRIVE SYSTEM</span>
-        <strong id="ignitionState">OFF</strong>
-      </div>
-
-      <div class="dic-primary">
-        <div class="selector-block">
-          <small>SELECTOR</small>
-          <strong id="selectorValue">PARK</strong>
-        </div>
-        <div class="ready-block">
-          <small>STATUS</small>
-          <strong id="driveState">POWER OFF</strong>
-        </div>
-      </div>
-
-      <div class="pedal-row">
+    <article class="dic glass-card clean-dic">
+      <div class="pedal-row clean-pedal-row">
         <div class="pedal-meter">
           <div class="meter-head"><span>THROTTLE</span><b id="throttleValue">0%</b></div>
           <div class="meter-track"><i id="throttleBar"></i></div>
@@ -159,22 +110,14 @@
         </div>
       </div>
 
-      <div class="status-grid">
-        <div id="warnControl" class="status-tile"><span class="status-icon">LINK</span><b>CONTROL</b><i></i></div>
-        <div id="warnVideo" class="status-tile"><span class="status-icon">CAM</span><b>CAMERA</b><i></i></div>
-        <div id="warnUndervolt" class="status-tile"><span class="status-icon">5V</span><b>POWER</b><i></i></div>
-        <div id="warnArmed" class="status-tile"><span class="status-icon">ESC</span><b>DRIVE</b><i></i></div>
-        <div id="warnFailsafe" class="status-tile"><span class="status-icon">SAFE</span><b>FAILSAFE</b><i></i></div>
-        <div id="warnTemp" class="status-tile"><span class="status-icon">TEMP</span><b>PI TEMP</b><i></i></div>
+      <div class="status-grid clean-status-grid">
+        <div id="warnControl" class="status-tile"><span class="status-icon">LINK</span><i></i></div>
+        <div id="warnVideo" class="status-tile"><span class="status-icon">CAM</span><i></i></div>
+        <div id="warnUndervolt" class="status-tile"><span class="status-icon">5V</span><i></i></div>
+        <div id="warnArmed" class="status-tile"><span class="status-icon">ESC</span><i></i></div>
+        <div id="warnFailsafe" class="status-tile"><span class="status-icon">SAFE</span><i></i></div>
+        <div id="warnTemp" class="status-tile"><span class="status-icon">TEMP</span><i></i></div>
       </div>
-
-      <div class="interlock-row">
-        <div id="brakeLock" class="interlock"><span class="lock-symbol"></span><b>BRAKE TO SHIFT</b><strong>LOCKED</strong></div>
-        <div class="rtt-box"><small>CONTROL RTT</small><strong id="rttValue">-- ms</strong></div>
-      </div>
-
-      <div id="noticeBox" class="notice-box">HOLD BRAKE · PRESS START</div>
-      <div id="axisDebug" class="axis-debug">INPUT DEBUG: --</div>
     </article>
 
     <article class="gauge-card">
@@ -200,33 +143,22 @@
       </div>
     </article>
 
-    <nav class="gear-stack glass-card">
+    <nav class="gear-stack glass-card clean-gears">
       <div class="gear-head">PRND</div>
       <button class="gear-btn active" data-gear="P"><span>P</span><small>PARK</small></button>
       <button class="gear-btn" data-gear="R"><span>R</span><small>REVERSE</small></button>
       <button class="gear-btn" data-gear="N"><span>N</span><small>NEUTRAL</small></button>
       <button class="gear-btn" data-gear="D"><span>D</span><small>DRIVE</small></button>
-      <div id="gearLockText" class="gear-lock-text">BRAKE REQUIRED</div>
     </nav>
   </section>
 
-  <footer class="footer">
-    <div class="ignition-zone">
-      <button id="startBtn" class="ignition-button">
-        <span class="power-icon"></span>
-        <b id="startMain">START</b>
-        <small id="startSub">ENGINE</small>
-      </button>
-      <div class="start-hint"><b>START / STOP</b><span id="startHint">HOLD BRAKE</span></div>
-    </div>
-
+  <footer class="footer clean-footer">
+    <button id="startBtn" class="ignition-button">
+      <span class="power-icon"></span>
+      <b id="startMain">START</b>
+      <small id="startSub">ENGINE</small>
+    </button>
     <button id="estopBtn" class="estop-button"><span>EMERGENCY</span><b>STOP</b></button>
-
-    <div class="footer-strip">
-      <span>WASD FALLBACK</span>
-      <span>1 / 2 / 3 / 4 = P / R / N / D</span>
-      <span>SHIFT INTERLOCK ACTIVE</span>
-    </div>
   </footer>
 </main>
 <script src="/static/app.js"></script>

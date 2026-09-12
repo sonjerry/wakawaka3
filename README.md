@@ -365,3 +365,15 @@ Pi 의존성은 `aiohttp`, `PyYAML`, `smbus2`만 사용합니다.
 RPM/속도 눈금, 숫자, 바늘은 모두 동일한 270도 수학적 스케일로 SVG에서 생성됩니다.
 눈금 위치와 바늘 위치가 같은 `value → angle` 함수를 공유하므로 기존처럼 바늘이 눈금과 어긋나지 않습니다.
 
+
+## v4 hardware-control changes
+
+- ESC startup neutral handshake: 1500us for 3 seconds
+- ESC forward range widened to 1540–2000us
+- active electronic brake request added on physical ESC output
+- full-brake virtual deceleration increased
+- steering center trim +45us added
+- requested header / RTT / shift-lock / drive-ready text UI removed
+- `/health` now exposes the actual ESC pulse and ESC mode for diagnosis
+
+See `ESC_SETUP.md` for calibration details.

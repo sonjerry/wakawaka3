@@ -419,7 +419,7 @@ class VehicleModel:
 
         mass = float(self.v["mass_kg"])
         # Soft first half, strong second half like a boosted road-car pedal.
-        decel = float(self.v["max_brake_decel_mps2"]) * (brake ** 1.65)
+        decel = float(self.v["max_brake_decel_mps2"]) * (0.18 * brake + 0.82 * (brake ** 1.28))
         return -math.copysign(mass * decel, self.speed_mps)
 
     def _motor_target_from_speed(self):

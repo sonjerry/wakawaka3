@@ -7,7 +7,7 @@ def clamp(v, lo, hi):
 
 
 def approach(current, target, rate_per_s, dt):
-    step = rate_per_s * dt
+    step = max(0.0, rate_per_s) * dt
     if current < target:
         return min(target, current + step)
     return max(target, current - step)
@@ -18,7 +18,6 @@ class PCA9685:
     MODE2 = 0x01
     PRESCALE = 0xFE
     LED0_ON_L = 0x06
-
     RESTART = 0x80
     SLEEP = 0x10
     AI = 0x20
@@ -30,7 +29,6 @@ class PCA9685:
         self.frequency = float(pcfg["frequency_hz"])
         self.bus_num = int(pcfg.get("i2c_bus", 1))
         self.bus = SMBus(self.bus_num)
-
         self._write(self.MODE1, self.AI)
         self._write(self.MODE2, self.OUTDRV)
         time.sleep(0.01)
@@ -44,44 +42,35 @@ class PCA9685:
 
     def set_frequency(self, hz):
         hz = float(hz)
-        # PCA9685 oscillator nominally 25 MHz.
         prescale = int(round(25_000_000.0 / (4096.0 * hz) - 1.0))
         prescale = max(3, min(255, prescale))
-
         old_mode = self._read(self.MODE1)
-        sleep_mode = (old_mode & 0x7F) | self.SLEEP
-
-        self._write(self.MODE1, sleep_mode)
+        self._write(self.MODE1, (old_mode & 0x7F) | self.SLEEP)
         self._write(self.PRESCALE, prescale)
         self._write(self.MODE1, old_mode)
         time.sleep(0.005)
         self._write(self.MODE1, old_mode | self.RESTART | self.AI)
-
         self.frequency = hz
 
     def set_pwm(self, channel, on_count, off_count):
         channel = int(channel)
         if not 0 <= channel <= 15:
             raise ValueError("PCA9685 channel must be 0..15")
-
         reg = self.LED0_ON_L + 4 * channel
         on_count &= 0x0FFF
         off_count &= 0x0FFF
-
-        data = [
+        self.bus.write_i2c_block_data(self.address, reg, [
             on_count & 0xFF,
             (on_count >> 8) & 0x0F,
             off_count & 0xFF,
             (off_count >> 8) & 0x0F,
-        ]
-        self.bus.write_i2c_block_data(self.address, reg, data)
+        ])
 
     def pulse_us(self, channel, pulse_us):
         period_us = 1_000_000.0 / self.frequency
         pulse_us = clamp(float(pulse_us), 0.0, period_us)
         counts = int(round((pulse_us / period_us) * 4096.0))
-        counts = max(0, min(4095, counts))
-        self.set_pwm(channel, 0, counts)
+        self.set_pwm(channel, 0, max(0, min(4095, counts)))
 
     def all_off(self):
         for ch in range(16):
@@ -100,138 +89,149 @@ class SteeringController:
         self.cfg = cfg["steering"]
         self.value = 0.0
 
+    @property
+    def center_pulse_us(self):
+        return float(self.cfg["center_us"]) + float(self.cfg.get("center_trim_us", 0.0))
+
     def update(self, target, dt):
         if self.cfg.get("invert"):
             target = -target
-
         target = clamp(float(target), -1.0, 1.0)
-        self.value = approach(
-            self.value,
-            target,
-            float(self.cfg["max_slew_per_s"]),
-            dt,
-        )
+        self.value = approach(self.value, target, float(self.cfg["max_slew_per_s"]), dt)
 
-        center = float(self.cfg["center_us"])
+        center = self.center_pulse_us
         if self.value < 0:
             pulse = center + (-self.value) * (float(self.cfg["left_us"]) - center)
         else:
             pulse = center + self.value * (float(self.cfg["right_us"]) - center)
-
         self.pca.pulse_us(self.cfg["channel"], pulse)
 
     def center(self):
         self.value = 0.0
-        self.pca.pulse_us(self.cfg["channel"], float(self.cfg["center_us"]))
+        self.pca.pulse_us(self.cfg["channel"], self.center_pulse_us)
 
 
 class ESCController:
+    """Receiver-style PPM/PWM ESC interface.
+
+    The generic 30A brushed ESC family expects the throttle signal to be at
+    the middle of its range at startup. We therefore continuously output
+    neutral for startup_neutral_s before accepting any drive command.
+
+    No undocumented full-throttle endpoint calibration is performed.
+    """
+
     def __init__(self, pca, cfg):
         self.pca = pca
         self.cfg = cfg["esc"]
-
-        self.armed = False
-        self.arm_requested_at = None
         self.value = 0.0
+        self.drive_enabled = False
+        self.ready = False
+        self.started_at = time.monotonic()
         self.direction_block_until = 0.0
-
+        self.last_pulse_us = float(self.cfg["neutral_us"])
+        self.last_mode = "ARM_NEUTRAL"
         self.write_neutral()
+
+    @property
+    def armed(self):
+        # Kept for backwards compatibility with laptop telemetry.
+        return self.ready
+
+    def _write_pulse(self, pulse_us, mode):
+        self.last_pulse_us = float(pulse_us)
+        self.last_mode = mode
+        self.pca.pulse_us(self.cfg["channel"], self.last_pulse_us)
 
     def write_neutral(self):
-        self.pca.pulse_us(
-            self.cfg["channel"],
-            float(self.cfg["neutral_us"]),
-        )
+        self._write_pulse(float(self.cfg["neutral_us"]), "NEUTRAL")
 
-    def disarm(self):
-        self.armed = False
-        self.arm_requested_at = None
-        self.value = 0.0
-        self.direction_block_until = 0.0
+    def service_startup(self):
+        if self.ready:
+            return
         self.write_neutral()
+        if time.monotonic() - self.started_at >= float(self.cfg.get("startup_neutral_s", 3.0)):
+            self.ready = True
+            self.last_mode = "READY"
 
-    def request_arm(self, requested, can_start=True):
-        now = time.monotonic()
-
-        if not requested:
-            self.disarm()
-            return
-
-        if self.armed:
-            return
-
-        if not can_start:
-            self.arm_requested_at = None
+    def set_drive_enabled(self, enabled):
+        self.drive_enabled = bool(enabled)
+        if not self.drive_enabled:
+            self.value = 0.0
             self.write_neutral()
-            return
 
-        if self.arm_requested_at is None:
-            self.arm_requested_at = now
-            self.write_neutral()
-            return
+    def safe(self):
+        # Failsafe disables motion but does not destroy the already-completed
+        # ESC startup neutral handshake.
+        self.set_drive_enabled(False)
+        self.direction_block_until = 0.0
 
-        if now - self.arm_requested_at >= float(self.cfg["arm_hold_s"]):
-            self.armed = True
-
-    def _pulse_for_value(self, value):
+    def _pulse_for_drive(self, value):
         value = clamp(float(value), -1.0, 1.0)
+        if self.cfg.get("invert_direction", False):
+            value = -value
         neutral = float(self.cfg["neutral_us"])
-
         if abs(value) <= float(self.cfg["output_deadband"]):
             return neutral
-
         if value > 0:
             lo = float(self.cfg["forward_min_us"])
             hi = float(self.cfg["forward_max_us"])
             return lo + value * (hi - lo)
-
         mag = abs(value)
         lo = float(self.cfg["reverse_min_us"])
         hi = float(self.cfg["reverse_max_us"])
         return lo + mag * (hi - lo)
 
-    def update(self, target, dt):
-        now = time.monotonic()
+    def _brake_pulse(self, brake, moving_forward):
+        neutral = float(self.cfg["neutral_us"])
+        full = float(self.cfg.get("brake_full_at", 0.80))
+        b = clamp(float(brake) / max(0.01, full), 0.0, 1.0)
+        # Receiver ESC braking is requested by commanding the opposite side
+        # of neutral while the vehicle is still moving.
+        if moving_forward:
+            edge = float(self.cfg["reverse_max_us"])
+        else:
+            edge = float(self.cfg["forward_max_us"])
+        return neutral + b * (edge - neutral)
 
-        if not self.armed:
+    def update(self, target, brake, signed_speed_kph, dt):
+        self.service_startup()
+
+        if not self.ready or not self.drive_enabled:
             self.value = 0.0
             self.write_neutral()
             return
 
-        target = clamp(float(target), -1.0, 1.0)
+        brake = clamp(float(brake), 0.0, 1.0)
+        speed = float(signed_speed_kph)
+        if (
+            bool(self.cfg.get("active_brake", True))
+            and brake >= float(self.cfg.get("brake_deadband", 0.04))
+            and abs(speed) > float(self.cfg.get("brake_stop_kph", 0.8))
+        ):
+            self.value = 0.0
+            pulse = self._brake_pulse(brake, moving_forward=speed > 0.0)
+            self._write_pulse(pulse, "BRAKE")
+            return
 
+        target = clamp(float(target), -1.0, 1.0)
         target_dir = 1 if target > 0.03 else (-1 if target < -0.03 else 0)
         current_dir = 1 if self.value > 0.03 else (-1 if self.value < -0.03 else 0)
+        now = time.monotonic()
 
-        # A direction change must pass through neutral.
-        if (
-            current_dir != 0
-            and target_dir != 0
-            and current_dir != target_dir
-        ):
+        if current_dir and target_dir and current_dir != target_dir:
             target = 0.0
             self.direction_block_until = max(
                 self.direction_block_until,
                 now + float(self.cfg["direction_neutral_hold_s"]),
             )
-
         if now < self.direction_block_until:
             target = 0.0
 
-        self.value = approach(
-            self.value,
-            target,
-            float(self.cfg["output_slew_per_s"]),
-            dt,
-        )
-
+        self.value = approach(self.value, target, float(self.cfg["output_slew_per_s"]), dt)
         if abs(self.value) < 0.01:
             self.value = 0.0
-
-        self.pca.pulse_us(
-            self.cfg["channel"],
-            self._pulse_for_value(self.value),
-        )
+        self._write_pulse(self._pulse_for_drive(self.value), "DRIVE" if self.value else "NEUTRAL")
 
 
 class Hardware:
@@ -241,7 +241,7 @@ class Hardware:
         self.esc = ESCController(self.pca, cfg)
 
     def safe(self, center_steering=True):
-        self.esc.disarm()
+        self.esc.safe()
         if center_steering:
             self.steering.center()
 

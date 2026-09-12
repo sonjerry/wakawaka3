@@ -265,6 +265,7 @@ class App:
                 "steering": steering_out,
                 "motor": motor_out,
                 "brake": brake_out,
+                "signed_speed_kph": self.state.get("signed_speed_kph", 0.0),
                 "selector": selector_out,
                 "armed": ignition_on,
             })

@@ -10,22 +10,28 @@ pca9685:
 steering:
   channel: 0
   center_us: 1500
+  center_trim_us: 45
   left_us: 1100
   right_us: 1900
   invert: false
-  max_slew_per_s: 4.5
+  max_slew_per_s: 5.5
 
 esc:
   channel: 1
   neutral_us: 1500
-  forward_min_us: 1520
-  forward_max_us: 1900
-  reverse_min_us: 1480
-  reverse_max_us: 1100
+  forward_min_us: 1540
+  forward_max_us: 2000
+  reverse_min_us: 1460
+  reverse_max_us: 1000
+  invert_direction: false
   output_deadband: 0.025
-  arm_hold_s: 1.5
-  direction_neutral_hold_s: 0.25
-  output_slew_per_s: 2.5
+  startup_neutral_s: 3.0
+  direction_neutral_hold_s: 0.30
+  output_slew_per_s: 3.5
+  active_brake: true
+  brake_deadband: 0.04
+  brake_full_at: 0.80
+  brake_stop_kph: 0.8
 
 failsafe:
   command_timeout_s: 0.30

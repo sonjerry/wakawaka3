@@ -155,3 +155,20 @@ body.ignition-on .illuminated{filter:none;opacity:1}
 .svg-needle circle{fill:#26343c;stroke:#a4b4bc;stroke-width:1}
 .svg-needle .needle-cap{fill:#090d10;stroke:#53656e;stroke-width:.8}
 .gauge-center{pointer-events:none}
+
+
+/* v4 clean cockpit: requested textual status/header blocks removed */
+.clean-layout{padding-top:8px}
+.clean-layout .camera-frame{margin-top:4px}
+.clean-cluster{margin-top:10px}
+.clean-dic{display:grid;align-content:center;min-height:235px;padding:18px 12px}
+.clean-pedal-row{padding:0 4px 22px;gap:14px}
+.clean-status-grid{padding:0 4px;grid-template-columns:repeat(6,1fr);gap:8px}
+.clean-status-grid .status-tile{height:52px}
+.clean-status-grid .status-icon{font-size:8px}
+.clean-gears{grid-template-rows:24px repeat(4,1fr);padding-bottom:8px}
+.single-readout{grid-template-columns:1fr;text-align:center}
+.single-readout>div+div{border-left:0}
+.clean-footer{justify-content:flex-start;gap:16px;margin-top:12px}
+.clean-footer .ignition-button{flex:0 0 auto}
+.clean-camera-topline{right:auto}

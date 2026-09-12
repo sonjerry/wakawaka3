@@ -6,7 +6,7 @@ vehicle:
   drag_area_m2: 0.74
   air_density_kg_m3: 1.225
   max_drive_force_n: 5200.0
-  max_brake_decel_mps2: 8.4
+  max_brake_decel_mps2: 10.8
   creep_target_kph: 6.5
   creep_force_n: 520.0
 
