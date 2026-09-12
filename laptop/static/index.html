@@ -3,65 +3,220 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>RC Sim Racing</title>
+  <title>RC Trailblazer Digital Cluster</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="ignition-off">
 <main class="dash">
-  <header>
-    <div class="brand"><b>RC</b><span>TRAILBLAZER // RC LAB<small>SIM-RACING TELEMETRY</small></span></div>
-    <div class="status"><i id="inputStatus">INPUT</i><i id="linkStatus" class="bad">CONTROL</i><i>VIDEO · WEBRTC</i><strong id="latency">-- ms</strong></div>
+  <header class="topbar">
+    <section class="brand-block">
+      <div class="bowtie-mark"><span>RC</span></div>
+      <div class="brand-copy">
+        <div class="brand-title">TRAILBLAZER RC</div>
+        <div class="brand-sub">DRIVER INFORMATION CENTER</div>
+      </div>
+      <div class="rs-stripe"></div>
+    </section>
+
+    <section class="top-status">
+      <div id="inputStatus" class="top-chip"><span class="dot"></span><b>INPUT</b></div>
+      <div id="linkStatus" class="top-chip bad"><span class="dot"></span><b>CONTROL</b></div>
+      <div id="videoStatus" class="top-chip"><span class="dot"></span><b>VIDEO</b></div>
+      <div id="engineLamp" class="top-chip off"><span class="dot"></span><b>IGN OFF</b></div>
+      <div class="latency-box"><small>RTT</small><strong id="latency">-- ms</strong></div>
+    </section>
   </header>
 
-  <section class="camera">
-    <iframe id="cameraFrame" allow="autoplay; fullscreen" scrolling="no"></iframe>
-    <div class="live">LIVE <span id="cameraHost">NO VIDEO</span></div>
-    <div id="shiftBanner" class="shift"></div>
+  <section class="camera-frame illuminated">
+    <div class="camera-bezel"></div>
+    <iframe id="cameraFrame" title="RC camera" allow="autoplay; fullscreen" scrolling="no"></iframe>
+    <div class="camera-glass"></div>
+    <div class="camera-vignette"></div>
+
+    <div class="camera-topline">
+      <div class="live-label"><span class="rec-dot"></span>LIVE</div>
+      <div id="cameraHost" class="camera-host">NO VIDEO</div>
+      <div class="camera-mode">HD · LOW LATENCY</div>
+    </div>
+
+    <div id="shiftBanner" class="shift-banner"></div>
+
+    <div id="offOverlay" class="power-overlay show">
+      <div class="boot-emblem"><span>RC</span></div>
+      <div class="overlay-title">IGNITION OFF</div>
+      <div class="overlay-rule"></div>
+      <div class="overlay-sub">HOLD BRAKE · PRESS START</div>
+    </div>
+
+    <div id="bootOverlay" class="boot-overlay">
+      <div class="boot-line"></div>
+      <div class="boot-copy">SYSTEM CHECK</div>
+      <div class="boot-progress"><i id="bootProgress"></i></div>
+    </div>
   </section>
 
-  <section class="cluster">
-    <article class="steering panel">
-      <label>STEERING</label>
-      <svg viewBox="0 0 240 170">
-        <rect x="86" y="25" width="68" height="120" rx="26" class="body"/>
-        <rect x="99" y="43" width="42" height="36" rx="8" class="glass"/>
-        <rect x="99" y="91" width="42" height="34" rx="8" class="glass"/>
-        <g id="fl"><rect x="67" y="34" width="16" height="42" rx="6" class="wheel"/></g>
-        <g id="fr"><rect x="157" y="34" width="16" height="42" rx="6" class="wheel"/></g>
-        <rect x="67" y="101" width="16" height="42" rx="6" class="wheel"/>
-        <rect x="157" y="101" width="16" height="42" rx="6" class="wheel"/>
-      </svg>
-      <strong id="steerValue">0°</strong>
+  <section class="cluster illuminated">
+    <article class="vehicle-card glass-card">
+      <div class="card-head">
+        <span>VEHICLE</span>
+        <b id="steerStatus">STEERING</b>
+      </div>
+
+      <div class="vehicle-stage">
+        <svg viewBox="0 0 260 190" class="car-svg" aria-label="Top view vehicle">
+          <defs>
+            <linearGradient id="bodyMetal" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1f3d4f"/>
+              <stop offset="0.45" stop-color="#102431"/>
+              <stop offset="1" stop-color="#071018"/>
+            </linearGradient>
+            <linearGradient id="glassGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3b718b"/>
+              <stop offset="1" stop-color="#102b3a"/>
+            </linearGradient>
+            <filter id="carGlow">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <ellipse cx="130" cy="170" rx="74" ry="10" class="car-shadow"/>
+          <path d="M93 33 Q102 18 130 16 Q158 18 167 33 L176 139 Q169 163 130 169 Q91 163 84 139 Z" class="car-body"/>
+          <path d="M108 37 Q130 28 152 37 L158 77 Q130 69 102 77 Z" class="car-glass"/>
+          <path d="M101 94 Q130 87 159 94 L155 131 Q130 139 105 131 Z" class="car-glass rear"/>
+          <path d="M96 86 H164" class="car-trim"/>
+          <path d="M103 143 Q130 153 157 143" class="car-trim"/>
+          <g id="frontLeftWheel" transform="rotate(0 78 60)"><rect x="69" y="39" width="18" height="43" rx="7" class="wheel"/></g>
+          <g id="frontRightWheel" transform="rotate(0 182 60)"><rect x="173" y="39" width="18" height="43" rx="7" class="wheel"/></g>
+          <rect x="69" y="118" width="18" height="43" rx="7" class="wheel"/>
+          <rect x="173" y="118" width="18" height="43" rx="7" class="wheel"/>
+          <path d="M104 22 H156" class="headlamp"/>
+        </svg>
+        <div class="steer-axis"></div>
+      </div>
+
+      <div class="vehicle-readout">
+        <div><small>STEER ANGLE</small><strong id="steerValue">0°</strong></div>
+        <div><small>INPUT</small><strong id="inputMode">WASD</strong></div>
+      </div>
     </article>
 
-    <article class="gauge"><div id="rpmGauge" class="ring"><div><small>RPM ×1000</small><b id="rpmValue">0.9</b><em id="gearValue">P</em></div></div></article>
-
-    <article class="center panel">
-      <div class="bars">
-        <div><span>THROTTLE</span><i><b id="throttleBar"></b></i></div>
-        <div><span>BRAKE</span><i><b id="brakeBar"></b></i></div>
-        <div><span>MOTOR</span><i><b id="motorBar"></b></i></div>
+    <article class="gauge-card">
+      <div class="gauge-bezel">
+        <div id="rpmGauge" class="gauge-face rpm-gauge">
+          <div class="gauge-ticks"></div>
+          <div class="gauge-arc"></div>
+          <div class="red-zone"></div>
+          <span class="dial-label p0">0</span><span class="dial-label p1">1</span><span class="dial-label p2">2</span>
+          <span class="dial-label p3">3</span><span class="dial-label p4">4</span><span class="dial-label p5">5</span><span class="dial-label p6">6</span>
+          <div id="rpmNeedle" class="needle"><i></i></div>
+          <div class="needle-hub"></div>
+          <div class="gauge-center">
+            <small>RPM ×1000</small>
+            <strong id="rpmValue">0.0</strong>
+            <em id="gearValue">P</em>
+          </div>
+          <div class="gauge-caption">POWERTRAIN</div>
+        </div>
       </div>
-      <div class="warnings">
-        <span id="warnControl">CONTROL LINK</span>
-        <span id="warnInput">INPUT</span>
-        <span id="warnUndervolt">5V POWER</span>
-        <span id="warnArmed">ESC ARMED</span>
-        <span id="warnFailsafe">FAILSAFE</span>
-        <span id="warnTemp">PI TEMP</span>
-      </div>
-      <pre id="axisDebug">INPUT DEBUG: --</pre>
     </article>
 
-    <article class="gauge"><div id="speedGauge" class="ring"><div><small>SPEED</small><b id="speedValue">0</b><em>km/h</em></div></div></article>
+    <article class="dic glass-card">
+      <div class="dic-topline">
+        <span>DRIVE SYSTEM</span>
+        <strong id="ignitionState">OFF</strong>
+      </div>
 
-    <nav class="gears">
-      <button data-gear="P" class="active">P</button><button data-gear="R">R</button>
-      <button data-gear="N">N</button><button data-gear="D">D</button>
+      <div class="dic-primary">
+        <div class="selector-block">
+          <small>SELECTOR</small>
+          <strong id="selectorValue">PARK</strong>
+        </div>
+        <div class="ready-block">
+          <small>STATUS</small>
+          <strong id="driveState">POWER OFF</strong>
+        </div>
+      </div>
+
+      <div class="pedal-row">
+        <div class="pedal-meter">
+          <div class="meter-head"><span>THROTTLE</span><b id="throttleValue">0%</b></div>
+          <div class="meter-track"><i id="throttleBar"></i></div>
+        </div>
+        <div class="pedal-meter brake">
+          <div class="meter-head"><span>BRAKE</span><b id="brakeValue">0%</b></div>
+          <div class="meter-track"><i id="brakeBar"></i></div>
+        </div>
+        <div class="pedal-meter motor">
+          <div class="meter-head"><span>MOTOR</span><b id="motorValue">0%</b></div>
+          <div class="meter-track"><i id="motorBar"></i></div>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div id="warnControl" class="status-tile"><span class="status-icon">LINK</span><b>CONTROL</b><i></i></div>
+        <div id="warnVideo" class="status-tile"><span class="status-icon">CAM</span><b>CAMERA</b><i></i></div>
+        <div id="warnUndervolt" class="status-tile"><span class="status-icon">5V</span><b>POWER</b><i></i></div>
+        <div id="warnArmed" class="status-tile"><span class="status-icon">ESC</span><b>DRIVE</b><i></i></div>
+        <div id="warnFailsafe" class="status-tile"><span class="status-icon">SAFE</span><b>FAILSAFE</b><i></i></div>
+        <div id="warnTemp" class="status-tile"><span class="status-icon">TEMP</span><b>PI TEMP</b><i></i></div>
+      </div>
+
+      <div class="interlock-row">
+        <div id="brakeLock" class="interlock"><span class="lock-symbol"></span><b>BRAKE TO SHIFT</b><strong>LOCKED</strong></div>
+        <div class="rtt-box"><small>CONTROL RTT</small><strong id="rttValue">-- ms</strong></div>
+      </div>
+
+      <div id="noticeBox" class="notice-box">HOLD BRAKE · PRESS START</div>
+      <div id="axisDebug" class="axis-debug">INPUT DEBUG: --</div>
+    </article>
+
+    <article class="gauge-card">
+      <div class="gauge-bezel">
+        <div id="speedGauge" class="gauge-face speed-gauge">
+          <div class="gauge-ticks"></div>
+          <div class="gauge-arc"></div>
+          <span class="dial-label p0">0</span><span class="dial-label p1">10</span><span class="dial-label p2">20</span>
+          <span class="dial-label p3">30</span><span class="dial-label p4">35</span><span class="dial-label p5">40</span><span class="dial-label p6">45</span>
+          <div id="speedNeedle" class="needle"><i></i></div>
+          <div class="needle-hub"></div>
+          <div class="gauge-center">
+            <small>SPEED</small>
+            <strong id="speedValue">0</strong>
+            <em>km/h</em>
+          </div>
+          <div class="gauge-caption">ROAD SPEED</div>
+        </div>
+      </div>
+    </article>
+
+    <nav class="gear-stack glass-card">
+      <div class="gear-head">PRND</div>
+      <button class="gear-btn active" data-gear="P"><span>P</span><small>PARK</small></button>
+      <button class="gear-btn" data-gear="R"><span>R</span><small>REVERSE</small></button>
+      <button class="gear-btn" data-gear="N"><span>N</span><small>NEUTRAL</small></button>
+      <button class="gear-btn" data-gear="D"><span>D</span><small>DRIVE</small></button>
+      <div id="gearLockText" class="gear-lock-text">BRAKE REQUIRED</div>
     </nav>
   </section>
 
-  <footer><button id="armBtn">ARM ESC</button><button id="estopBtn">EMERGENCY STOP</button><span>WASD DRIVE · 1/2/3/4 = P/R/N/D</span></footer>
+  <footer class="footer">
+    <div class="ignition-zone">
+      <button id="startBtn" class="ignition-button">
+        <span class="power-icon"></span>
+        <b id="startMain">START</b>
+        <small id="startSub">ENGINE</small>
+      </button>
+      <div class="start-hint"><b>START / STOP</b><span id="startHint">HOLD BRAKE</span></div>
+    </div>
+
+    <button id="estopBtn" class="estop-button"><span>EMERGENCY</span><b>STOP</b></button>
+
+    <div class="footer-strip">
+      <span>WASD FALLBACK</span>
+      <span>1 / 2 / 3 / 4 = P / R / N / D</span>
+      <span>SHIFT INTERLOCK ACTIVE</span>
+    </div>
+  </footer>
 </main>
 <script src="/static/app.js"></script>
 </body>

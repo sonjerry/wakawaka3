@@ -304,3 +304,23 @@ Pi에서 하드웨어 보정값을 수정했다면 반대로 commit/push하고 �
 10. reverse 테스트
 11. 바닥 주행
 12. `vehicle.yaml` 감성 조정
+
+## 시동 / 브레이크 인터록
+
+대시보드는 OFF → SYSTEM CHECK → ENGINE ON 상태를 가집니다.
+
+- 시동 OFF에서는 계기판과 카메라 클러스터가 어둡게 비활성화되고 Pi에는 강제 DISARM/neutral 명령이 전송됩니다.
+- P 또는 N 상태에서 브레이크를 일정 이상 밟아야 START 버튼이 동작합니다.
+- START 후 약 2.35초 동안 계기판 sweep 및 경고등 self-check가 실행됩니다.
+- ENGINE ON 이후 Pi가 ESC armed 상태를 확인한 뒤 DRIVE READY가 됩니다.
+- **P/R/N/D 사이의 모든 기어 변경은 브레이크를 밟고 있을 때만 허용됩니다.**
+- 주행 중 D↔R 전환 및 주행 중 P 진입은 기존 속도 인터록으로 추가 차단됩니다.
+- 시동 종료는 정지 상태 + P에서만 허용됩니다.
+- EMERGENCY STOP은 즉시 ignition OFF + motor 0 + P + Pi DISARM 상태로 전환합니다.
+
+기본 임계값은 `laptop/main.py` 상단에서 조정합니다.
+
+```python
+START_BRAKE_THRESHOLD = 0.20
+GEAR_BRAKE_THRESHOLD = 0.18
+```
