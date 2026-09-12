@@ -3,7 +3,7 @@ server:
   port: 8080
 
 pi:
-  host: "192.168.137.20"
+  host: "192.168.137.251"
   control_port: 8765
   websocket_path: "/ws/control"
   reconnect_seconds: 1.0
