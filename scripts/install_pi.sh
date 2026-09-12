@@ -3,41 +3,38 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+echo "[1/4] Installing system packages..."
 sudo apt-get update
 sudo apt-get install -y \
   python3-venv \
   python3-pip \
-  python3-dev \
   i2c-tools \
   curl
 
+echo "[2/4] Enabling I2C..."
 sudo raspi-config nonint do_i2c 0 || true
 
+echo "[3/4] Creating Python virtual environment..."
 rm -rf "$ROOT/.venv-pi"
 python3 -m venv "$ROOT/.venv-pi"
 
 PYTHON="$ROOT/.venv-pi/bin/python"
-
 "$PYTHON" -m pip install --upgrade pip setuptools wheel
 
-# Python 3.13+ on 64-bit Raspberry Pi must use Adafruit's prebuilt lgpio wheel.
-PYVER="$("$PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-ARCH="$(uname -m)"
-
-if [[ "$PYVER" == "3.13" || "$PYVER" == "3.14" || "$PYVER" == "3.15" ]]; then
-  if [[ "$ARCH" == "aarch64" ]]; then
-    "$PYTHON" -m pip install --no-cache-dir "adafruit-lgpio==0.2.2.0"
-  fi
-fi
-
+echo "[4/4] Installing Pi dependencies..."
 "$PYTHON" -m pip install --no-cache-dir -r "$ROOT/requirements-pi.txt"
 
 echo
-echo "Pi install complete."
+echo "Dependency check:"
 "$PYTHON" -m pip check
-"$PYTHON" -c "import lgpio; print('lgpio OK')"
-"$PYTHON" -c "import board, busio; print('Blinka OK')"
-"$PYTHON" -c "from adafruit_pca9685 import PCA9685; print('PCA9685 OK')"
+"$PYTHON" -c "from smbus2 import SMBus; print('smbus2 OK')"
+
 echo
-echo "Check PCA9685 on I2C bus with:"
-echo "  i2cdetect -y 1"
+echo "I2C scan:"
+i2cdetect -y 1 || true
+
+echo
+echo "Install complete."
+echo "Expected PCA9685 address: 0x40"
+echo "Run:"
+echo "  ./scripts/run_pi.sh"

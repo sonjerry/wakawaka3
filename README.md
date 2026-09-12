@@ -324,3 +324,44 @@ Pi에서 하드웨어 보정값을 수정했다면 반대로 commit/push하고 �
 START_BRAKE_THRESHOLD = 0.20
 GEAR_BRAKE_THRESHOLD = 0.18
 ```
+
+## PCA9685 Python driver
+
+Pi 제어부는 더 이상 Adafruit Blinka / lgpio를 사용하지 않습니다.
+PCA9685는 `smbus2`로 I2C 레지스터를 직접 제어합니다.
+
+따라서 Raspberry Pi Python 환경에는 다음 패키지가 필요하지 않습니다.
+
+- `adafruit-blinka`
+- `adafruit-lgpio`
+- `lgpio`
+- `RPi.GPIO`
+
+Pi 의존성은 `aiohttp`, `PyYAML`, `smbus2`만 사용합니다.
+
+## 1.3 Turbo / 9AT 가상 파워트레인 v3
+
+가상 파워트레인은 Trailblazer 1.3 Turbo AWD의 9단 자동 구성을 기준으로 다시 작성했습니다.
+
+- 9단 기어비: 4.689 / 3.306 / 3.012 / 2.446 / 1.923 / 1.446 / 1.000 / 0.747 / 0.617
+- final drive: 3.17
+- idle: 750 rpm
+- 155 hp급 / 236 Nm(174 lb-ft)급 토크 곡선
+- 토크컨버터 저속 slip + 속도/부하에 따른 lock-up
+- 스로틀별 upshift/downshift map
+- 변속 후 dwell + hysteresis로 gear hunting 방지
+- 급가속 시 한 번에 여러 단을 내리는 kickdown
+- 변속 중 ESC PWM 강제 drop 제거: 가속력만 부드럽게 줄고 차량 속도/모터 명령은 연속
+- D/R creep
+- 비선형 브레이크 페달과 저속 brake hold
+- 감속 중 1단 launch gear 사전 선택
+- 가상 0–60 mph 약 9초 수준
+- ESC PWM은 가상 차속을 연속적으로 추종
+
+`config/vehicle.yaml`에서 토크 곡선, 변속 맵, 토크컨버터, 브레이크, ESC 추종 특성을 조절할 수 있습니다.
+
+### 계기판 바늘
+
+RPM/속도 눈금, 숫자, 바늘은 모두 동일한 270도 수학적 스케일로 SVG에서 생성됩니다.
+눈금 위치와 바늘 위치가 같은 `value → angle` 함수를 공유하므로 기존처럼 바늘이 눈금과 어긋나지 않습니다.
+

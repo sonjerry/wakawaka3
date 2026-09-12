@@ -1,42 +1,86 @@
 vehicle:
-  mass_kg: 12.0
-  wheel_radius_m: 0.055
-  rolling_force_n: 3.0
-  aero_drag_coeff: 0.025
-  max_brake_force_n: 60.0
-  engine_brake_force_n: 8.0
-  drivetrain_efficiency: 0.84
+  mass_kg: 1500.0
+  wheel_radius_m: 0.351
+  drivetrain_efficiency: 0.86
+  rolling_resistance_coeff: 0.0115
+  drag_area_m2: 0.74
+  air_density_kg_m3: 1.225
+  max_drive_force_n: 5200.0
+  max_brake_decel_mps2: 8.4
+  creep_target_kph: 6.5
+  creep_force_n: 520.0
 
 speed:
-  max_forward_kph: 45.0
-  max_reverse_kph: 12.0
+  gauge_max_kph: 200.0
+  virtual_max_kph: 185.0
+  motor_reference_kph: 180.0
+  reverse_max_kph: 25.0
 
 engine:
-  idle_rpm: 900
+  idle_rpm: 750
   redline_rpm: 6500
-  inertia_response_per_s: 9.0
-  max_virtual_torque_nm: 0.25
-  torque_curve:
-    - [900, 0.45]
-    - [1800, 0.70]
-    - [3000, 0.92]
-    - [4200, 1.00]
-    - [5200, 0.92]
-    - [6500, 0.70]
+  free_rev_limit_rpm: 4200
+  rpm_response_up_per_s: 9000.0
+  rpm_response_down_per_s: 12000.0
+  throttle_response_up_s: 0.18
+  throttle_response_down_s: 0.10
+  torque_curve_nm:
+    - [750, 120.0]
+    - [1100, 180.0]
+    - [1600, 236.0]
+    - [2500, 236.0]
+    - [3500, 232.0]
+    - [4500, 220.0]
+    - [5600, 198.0]
+    - [6200, 170.0]
+    - [6500, 150.0]
+
+torque_converter:
+  stall_rpm_low: 1150
+  stall_rpm_high: 2850
+  lock_begin_kph: 18.0
+  lock_full_kph: 52.0
+  unlock_throttle: 0.72
+  slip_rpm_max: 1750.0
 
 transmission:
-  ratios: [3.60, 2.19, 1.52, 1.18, 0.95, 0.78]
-  final_drive: 3.35
-  upshift_rpm: 5800
-  downshift_rpm: 1900
-  min_shift_interval_s: 0.55
-  shift_duration_s: 0.30
-  torque_cut_fraction: 0.72
-  kickdown_throttle: 0.82
-  kickdown_target_rpm: 4300
+  ratios: [4.689, 3.306, 3.012, 2.446, 1.923, 1.446, 1.000, 0.747, 0.617]
+  reverse_ratio: 2.96
+  final_drive: 3.17
+  min_speed_for_gear_kph: [0, 8, 13, 19, 27, 38, 52, 69, 90]
+  min_shift_dwell_s: 0.50
+  shift_duration_s: 0.38
+  shift_torque_cut_min: 0.12
+  shift_torque_cut_max: 0.28
+  min_post_upshift_rpm: 1250
+  kickdown_min_rpm: 2700
+  kickdown_max_rpm: 5900
+  kickdown_throttle: 0.67
+  kickdown_delta: 0.16
+  ninth_max_throttle: 0.46
+  upshift_rpm_map:
+    - [0.00, 1650]
+    - [0.12, 1800]
+    - [0.25, 2150]
+    - [0.40, 2600]
+    - [0.55, 3250]
+    - [0.70, 4050]
+    - [0.85, 5050]
+    - [1.00, 6050]
+  downshift_rpm_map:
+    - [0.00, 1000]
+    - [0.20, 1125]
+    - [0.40, 1300]
+    - [0.60, 1500]
+    - [0.80, 1750]
+    - [1.00, 2050]
+
+engine_braking:
+  coast_decel_mps2: 0.16
+  in_gear_extra_decel_mps2: 0.10
 
 esc_model:
-  min_effective_drive: 0.11
-  output_slew_up_per_s: 1.9
-  output_slew_down_per_s: 1.25
-  shift_output_drop: 0.25
+  min_effective_drive: 0.15
+  speed_curve_exponent: 0.84
+  output_slew_up_per_s: 1.8
+  output_slew_down_per_s: 1.45

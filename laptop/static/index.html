@@ -102,20 +102,27 @@
 
     <article class="gauge-card">
       <div class="gauge-bezel">
-        <div id="rpmGauge" class="gauge-face rpm-gauge">
-          <div class="gauge-ticks"></div>
-          <div class="gauge-arc"></div>
-          <div class="red-zone"></div>
-          <span class="dial-label p0">0</span><span class="dial-label p1">1</span><span class="dial-label p2">2</span>
-          <span class="dial-label p3">3</span><span class="dial-label p4">4</span><span class="dial-label p5">5</span><span class="dial-label p6">6</span>
-          <div id="rpmNeedle" class="needle"><i></i></div>
-          <div class="needle-hub"></div>
+        <div class="gauge-face rpm-gauge exact-gauge">
+          <svg class="gauge-svg" viewBox="0 0 240 240" aria-label="RPM gauge">
+            <defs>
+              <filter id="rpmGlow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <path class="gauge-base-arc" id="rpmBaseArc"></path>
+            <path class="gauge-value-arc rpm-value-arc" id="rpmArc"></path>
+            <path class="gauge-red-arc" id="rpmRedArc"></path>
+            <g id="rpmTicks"></g>
+            <g id="rpmNeedle" class="svg-needle rpm-needle">
+              <path d="M120 117.8 L204 120 L120 122.2 Z"></path>
+              <circle cx="120" cy="120" r="7.5"></circle>
+              <circle cx="120" cy="120" r="3.2" class="needle-cap"></circle>
+            </g>
+          </svg>
           <div class="gauge-center">
             <small>RPM ×1000</small>
             <strong id="rpmValue">0.0</strong>
             <em id="gearValue">P</em>
           </div>
-          <div class="gauge-caption">POWERTRAIN</div>
+          <div class="gauge-caption">1.3 TURBO · 9AT</div>
         </div>
       </div>
     </article>
@@ -172,13 +179,17 @@
 
     <article class="gauge-card">
       <div class="gauge-bezel">
-        <div id="speedGauge" class="gauge-face speed-gauge">
-          <div class="gauge-ticks"></div>
-          <div class="gauge-arc"></div>
-          <span class="dial-label p0">0</span><span class="dial-label p1">10</span><span class="dial-label p2">20</span>
-          <span class="dial-label p3">30</span><span class="dial-label p4">35</span><span class="dial-label p5">40</span><span class="dial-label p6">45</span>
-          <div id="speedNeedle" class="needle"><i></i></div>
-          <div class="needle-hub"></div>
+        <div class="gauge-face speed-gauge exact-gauge">
+          <svg class="gauge-svg" viewBox="0 0 240 240" aria-label="Speed gauge">
+            <path class="gauge-base-arc" id="speedBaseArc"></path>
+            <path class="gauge-value-arc speed-value-arc" id="speedArc"></path>
+            <g id="speedTicks"></g>
+            <g id="speedNeedle" class="svg-needle speed-needle">
+              <path d="M120 117.8 L204 120 L120 122.2 Z"></path>
+              <circle cx="120" cy="120" r="7.5"></circle>
+              <circle cx="120" cy="120" r="3.2" class="needle-cap"></circle>
+            </g>
+          </svg>
           <div class="gauge-center">
             <small>SPEED</small>
             <strong id="speedValue">0</strong>

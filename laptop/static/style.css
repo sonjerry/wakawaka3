@@ -136,3 +136,22 @@ body.ignition-on .illuminated{filter:none;opacity:1}
 @media(max-width:980px){
   .top-status{gap:4px}.top-chip{padding:0 7px}.cluster{grid-template-columns:1fr 1fr}.vehicle-card{display:none}.dic{grid-column:1/-1;order:4}.gear-stack{grid-column:1/-1;grid-template-columns:60px repeat(4,1fr);grid-template-rows:58px 20px;min-height:auto}.gear-head{grid-row:1/2}.gear-btn{grid-row:1/2}.gear-lock-text{grid-column:1/-1}.footer-strip{display:none}.camera-frame{width:100%}
 }
+
+
+/* Exact mathematical gauges: ticks, labels and needle share one 270° scale. */
+.exact-gauge{position:relative}
+.gauge-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gauge-base-arc{fill:none;stroke:rgba(120,157,176,.18);stroke-width:3.2;stroke-linecap:round}
+.gauge-value-arc{fill:none;stroke:#62d8ff;stroke-width:3.3;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(98,216,255,.42))}
+.rpm-value-arc{stroke:#78dcff}.speed-value-arc{stroke:#65d8ff}
+.gauge-red-arc{fill:none;stroke:#ef4d57;stroke-width:4.2;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(239,77,87,.45))}
+.gauge-tick{stroke:rgba(218,237,246,.58);stroke-width:1}
+.gauge-tick.major{stroke:#d9edf5;stroke-width:1.7}
+.gauge-tick.red{stroke:#f05a63}
+.gauge-tick-label{fill:#aabdc6;font-size:10px;font-family:"Segoe UI",Arial,sans-serif;text-anchor:middle;dominant-baseline:middle;font-variant-numeric:tabular-nums}
+.gauge-tick-label.red{fill:#ff7c84}
+.svg-needle{transform-origin:120px 120px;transform-box:view-box;will-change:transform}
+.svg-needle path{fill:#e44751;filter:drop-shadow(0 0 4px rgba(240,77,87,.68))}
+.svg-needle circle{fill:#26343c;stroke:#a4b4bc;stroke-width:1}
+.svg-needle .needle-cap{fill:#090d10;stroke:#53656e;stroke-width:.8}
+.gauge-center{pointer-events:none}
