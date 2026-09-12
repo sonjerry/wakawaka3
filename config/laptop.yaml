@@ -1,0 +1,18 @@
+server:
+  host: "127.0.0.1"
+  port: 8080
+
+pi:
+  host: "192.168.137.20"
+  control_port: 8765
+  websocket_path: "/ws/control"
+  reconnect_seconds: 1.0
+  command_hz: 50
+
+simulation:
+  hz: 100
+  dashboard_hz: 30
+
+video:
+  webrtc_port: 8889
+  path: "cam"

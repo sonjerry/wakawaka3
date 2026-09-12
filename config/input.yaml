@@ -1,0 +1,25 @@
+device_name_contains:
+  - "Driving Force"
+  - "Logitech"
+
+axes:
+  steering: 0
+  throttle: 2
+  brake: 3
+
+invert:
+  steering: false
+  throttle: true
+  brake: true
+
+deadzone:
+  steering: 0.02
+  pedal: 0.02
+
+keyboard:
+  throttle_rise_per_s: 0.85
+  throttle_fall_per_s: 2.5
+  brake_rise_per_s: 1.25
+  brake_fall_per_s: 3.0
+  steering_rise_per_s: 1.8
+  steering_return_per_s: 2.4

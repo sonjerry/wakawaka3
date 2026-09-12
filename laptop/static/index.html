@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RC Sim Racing</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="dash">
+  <header>
+    <div class="brand"><b>RC</b><span>TRAILBLAZER // RC LAB<small>SIM-RACING TELEMETRY</small></span></div>
+    <div class="status"><i id="inputStatus">INPUT</i><i id="linkStatus" class="bad">CONTROL</i><i>VIDEO · WEBRTC</i><strong id="latency">-- ms</strong></div>
+  </header>
+
+  <section class="camera">
+    <iframe id="cameraFrame" allow="autoplay; fullscreen" scrolling="no"></iframe>
+    <div class="live">LIVE <span id="cameraHost">NO VIDEO</span></div>
+    <div id="shiftBanner" class="shift"></div>
+  </section>
+
+  <section class="cluster">
+    <article class="steering panel">
+      <label>STEERING</label>
+      <svg viewBox="0 0 240 170">
+        <rect x="86" y="25" width="68" height="120" rx="26" class="body"/>
+        <rect x="99" y="43" width="42" height="36" rx="8" class="glass"/>
+        <rect x="99" y="91" width="42" height="34" rx="8" class="glass"/>
+        <g id="fl"><rect x="67" y="34" width="16" height="42" rx="6" class="wheel"/></g>
+        <g id="fr"><rect x="157" y="34" width="16" height="42" rx="6" class="wheel"/></g>
+        <rect x="67" y="101" width="16" height="42" rx="6" class="wheel"/>
+        <rect x="157" y="101" width="16" height="42" rx="6" class="wheel"/>
+      </svg>
+      <strong id="steerValue">0°</strong>
+    </article>
+
+    <article class="gauge"><div id="rpmGauge" class="ring"><div><small>RPM ×1000</small><b id="rpmValue">0.9</b><em id="gearValue">P</em></div></div></article>
+
+    <article class="center panel">
+      <div class="bars">
+        <div><span>THROTTLE</span><i><b id="throttleBar"></b></i></div>
+        <div><span>BRAKE</span><i><b id="brakeBar"></b></i></div>
+        <div><span>MOTOR</span><i><b id="motorBar"></b></i></div>
+      </div>
+      <div class="warnings">
+        <span id="warnControl">CONTROL LINK</span>
+        <span id="warnInput">INPUT</span>
+        <span id="warnUndervolt">5V POWER</span>
+        <span id="warnArmed">ESC ARMED</span>
+        <span id="warnFailsafe">FAILSAFE</span>
+        <span id="warnTemp">PI TEMP</span>
+      </div>
+      <pre id="axisDebug">INPUT DEBUG: --</pre>
+    </article>
+
+    <article class="gauge"><div id="speedGauge" class="ring"><div><small>SPEED</small><b id="speedValue">0</b><em>km/h</em></div></div></article>
+
+    <nav class="gears">
+      <button data-gear="P" class="active">P</button><button data-gear="R">R</button>
+      <button data-gear="N">N</button><button data-gear="D">D</button>
+    </nav>
+  </section>
+
+  <footer><button id="armBtn">ARM ESC</button><button id="estopBtn">EMERGENCY STOP</button><span>WASD DRIVE · 1/2/3/4 = P/R/N/D</span></footer>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

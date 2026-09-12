@@ -1,0 +1,4 @@
+aiohttp>=3.10,<4
+PyYAML>=6,<7
+adafruit-circuitpython-pca9685>=3.4,<4
+adafruit-blinka>=8,<10

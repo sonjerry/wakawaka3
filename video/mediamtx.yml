@@ -1,0 +1,16 @@
+logLevel: info
+rtsp: true
+rtspAddress: :8554
+hls: true
+hlsAddress: :8888
+webrtc: true
+webrtcAddress: :8889
+
+paths:
+  cam:
+    source: rpiCamera
+    rpiCameraWidth: 1280
+    rpiCameraHeight: 720
+    rpiCameraFPS: 30
+    rpiCameraBitrate: 2500000
+    rpiCameraIDRPeriod: 30

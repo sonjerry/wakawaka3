@@ -1,0 +1,42 @@
+vehicle:
+  mass_kg: 12.0
+  wheel_radius_m: 0.055
+  rolling_force_n: 3.0
+  aero_drag_coeff: 0.025
+  max_brake_force_n: 60.0
+  engine_brake_force_n: 8.0
+  drivetrain_efficiency: 0.84
+
+speed:
+  max_forward_kph: 45.0
+  max_reverse_kph: 12.0
+
+engine:
+  idle_rpm: 900
+  redline_rpm: 6500
+  inertia_response_per_s: 9.0
+  max_virtual_torque_nm: 0.25
+  torque_curve:
+    - [900, 0.45]
+    - [1800, 0.70]
+    - [3000, 0.92]
+    - [4200, 1.00]
+    - [5200, 0.92]
+    - [6500, 0.70]
+
+transmission:
+  ratios: [3.60, 2.19, 1.52, 1.18, 0.95, 0.78]
+  final_drive: 3.35
+  upshift_rpm: 5800
+  downshift_rpm: 1900
+  min_shift_interval_s: 0.55
+  shift_duration_s: 0.30
+  torque_cut_fraction: 0.72
+  kickdown_throttle: 0.82
+  kickdown_target_rpm: 4300
+
+esc_model:
+  min_effective_drive: 0.11
+  output_slew_up_per_s: 1.9
+  output_slew_down_per_s: 1.25
+  shift_output_drop: 0.25
