@@ -23,3 +23,5 @@ keyboard:
   brake_fall_per_s: 3.0
   steering_rise_per_s: 1.8
   steering_return_per_s: 2.4
+  steering_self_center_start_kph: 0.5
+  steering_self_center_full_kph: 20.0

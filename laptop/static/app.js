@@ -3,11 +3,13 @@ let ws;
 let reconnectTimer = null;
 let keys = { w:false, a:false, s:false, d:false };
 let videoLoaded = false;
+let steeringTrimUs = 45;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 async function initVideo(){
   try{
     const cfg = await fetch('/api/config').then(r=>r.json());
+    if(Number.isFinite(Number(cfg.steering_trim_us))){steeringTrimUs=Number(cfg.steering_trim_us);$('alignmentValue').textContent=`${steeringTrimUs>=0?'+':''}${steeringTrimUs} µs`;}
     const frame = $('cameraFrame');
     frame.src = cfg.video_url;
     frame.addEventListener('load', ()=>{ videoLoaded = true; });
@@ -27,6 +29,9 @@ function requestGear(gear){ send({type:'gear',gear}); }
 
 $('startBtn').addEventListener('click',()=>send({type:'ignition_toggle'}));
 $('estopBtn').addEventListener('click',()=>send({type:'estop'}));
+function adjustAlignment(delta){steeringTrimUs=clamp(steeringTrimUs+delta,-150,150);$('alignmentValue').textContent=`${steeringTrimUs>=0?'+':''}${steeringTrimUs} µs`;send({type:'steering_trim',value_us:steeringTrimUs});}
+$('alignmentMinus').addEventListener('click',()=>adjustAlignment(-5));
+$('alignmentPlus').addEventListener('click',()=>adjustAlignment(5));
 document.querySelectorAll('.gear-btn').forEach(b=>b.addEventListener('click',()=>requestGear(b.dataset.gear)));
 
 const keyMap={KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d'};
@@ -83,6 +88,7 @@ function initGauges(){
 }
 
 function render(packet){
+  if(Number.isFinite(Number(packet.steering_trim_us))){steeringTrimUs=Number(packet.steering_trim_us);$('alignmentValue').textContent=`${steeringTrimUs>=0?'+':''}${steeringTrimUs} µs`;}
   const vehicle=packet.vehicle||{}, link=packet.link||{}, pi=packet.pi||{};
   const ignition=packet.ignition||{state:'off',elapsed_s:0,boot_duration_s:2.35};
   const interlock=packet.interlock||{};

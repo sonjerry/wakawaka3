@@ -28,10 +28,8 @@ esc:
   startup_neutral_s: 3.0
   direction_neutral_hold_s: 0.30
   output_slew_per_s: 3.5
-  active_brake: true
+  # Braking cuts drive to neutral; no reverse PWM without wheel-speed feedback.
   brake_deadband: 0.04
-  brake_full_at: 0.80
-  brake_stop_kph: 0.8
 
 failsafe:
   command_timeout_s: 0.30

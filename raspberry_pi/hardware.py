@@ -1,3 +1,4 @@
+import math
 import time
 from smbus2 import SMBus
 
@@ -93,6 +94,14 @@ class SteeringController:
     def center_pulse_us(self):
         return float(self.cfg["center_us"]) + float(self.cfg.get("center_trim_us", 0.0))
 
+    def set_center_trim_us(self, trim_us):
+        try:
+            trim = float(trim_us)
+        except (TypeError, ValueError):
+            return
+        if math.isfinite(trim):
+            self.cfg["center_trim_us"] = clamp(trim, -150.0, 150.0)
+
     def update(self, target, dt):
         if self.cfg.get("invert"):
             target = -target
@@ -182,19 +191,7 @@ class ESCController:
         hi = float(self.cfg["reverse_max_us"])
         return lo + mag * (hi - lo)
 
-    def _brake_pulse(self, brake, moving_forward):
-        neutral = float(self.cfg["neutral_us"])
-        full = float(self.cfg.get("brake_full_at", 0.80))
-        b = clamp(float(brake) / max(0.01, full), 0.0, 1.0)
-        # Receiver ESC braking is requested by commanding the opposite side
-        # of neutral while the vehicle is still moving.
-        if moving_forward:
-            edge = float(self.cfg["reverse_max_us"])
-        else:
-            edge = float(self.cfg["forward_max_us"])
-        return neutral + b * (edge - neutral)
-
-    def update(self, target, brake, signed_speed_kph, dt):
+    def update(self, target, brake, dt):
         self.service_startup()
 
         if not self.ready or not self.drive_enabled:
@@ -203,15 +200,11 @@ class ESCController:
             return
 
         brake = clamp(float(brake), 0.0, 1.0)
-        speed = float(signed_speed_kph)
-        if (
-            bool(self.cfg.get("active_brake", True))
-            and brake >= float(self.cfg.get("brake_deadband", 0.04))
-            and abs(speed) > float(self.cfg.get("brake_stop_kph", 0.8))
-        ):
+        if brake >= float(self.cfg.get("brake_deadband", 0.04)):
+            # Virtual speed is not a physical wheel-speed measurement. Sending
+            # reverse PWM here can drive the car backward instead of braking.
             self.value = 0.0
-            pulse = self._brake_pulse(brake, moving_forward=speed > 0.0)
-            self._write_pulse(pulse, "BRAKE")
+            self._write_pulse(float(self.cfg["neutral_us"]), "BRAKE_NEUTRAL")
             return
 
         target = clamp(float(target), -1.0, 1.0)

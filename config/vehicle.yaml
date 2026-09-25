@@ -80,7 +80,7 @@ engine_braking:
   in_gear_extra_decel_mps2: 0.10
 
 esc_model:
-  min_effective_drive: 0.15
+  min_effective_drive: 0.45
   speed_curve_exponent: 0.84
   output_slew_up_per_s: 1.8
   output_slew_down_per_s: 1.45

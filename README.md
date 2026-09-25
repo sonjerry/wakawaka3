@@ -81,15 +81,16 @@ i2cdetect -y 1
 ```yaml
 steering:
   center_us: 1500
+  center_trim_us: 45
   left_us: 1100
   right_us: 1900
 
 esc:
   neutral_us: 1500
-  forward_min_us: 1520
-  forward_max_us: 1900
-  reverse_min_us: 1480
-  reverse_max_us: 1100
+  forward_min_us: 1540
+  forward_max_us: 2000
+  reverse_min_us: 1460
+  reverse_max_us: 1000
 ```
 
 이 값들은 시작값일 뿐입니다. 실제 RCXAZ ESC와 서보에 맞게 반드시 보정하십시오.
@@ -189,7 +190,9 @@ WASD는 디지털 ON/OFF가 아니라 누르고 있는 시간에 따라 값이 �
 - W: throttle 증가
 - S: brake 증가
 - A/D: 조향 증가
-- 키를 떼면 부드럽게 복귀
+- A/D를 놓으면 정차·후진 중에는 현재 조향각을 유지하고, 전진 중에만 차속에 비례해 서서히 중립으로 복귀
+
+대시보드 아래 `STEERING ALIGNMENT`의 −/+ 버튼으로 중앙 펄스를 5µs씩 조절할 수 있습니다. 값은 노트북의 `config/steering_alignment.json`에 저장되고 Pi 조향 출력에 즉시 반영됩니다. 바퀴를 띄우고 정차 상태에서 좌우 어느 쪽이 중앙에 가까워지는지 확인하며 맞추십시오.
 
 기어 단축키:
 
@@ -221,6 +224,8 @@ ESC output
 악셀을 놓으면 추진력만 사라지고 가상 차량 속도는 구름저항/공기저항/엔진브레이크에 따라 감소합니다. 따라서 실제 ESC 출력도 가상 속도가 내려가는 만큼 서서히 감소합니다.
 
 브레이크도 속도를 순간적으로 0으로 만들지 않고 `max_brake_force_n`에 따라 감속시킵니다.
+
+실물 ESC에는 브레이크 입력 시 역방향 신호를 보내지 않고 1500µs 중립을 보냅니다. 따라서 가상 차속은 브레이크에 따라 감속하지만 실차에는 별도 기계식 브레이크가 없어 실제 감속은 구름저항 등에 의존합니다. `config/vehicle.yaml`의 `min_effective_drive: 0.45`는 실측한 크리핑 구동 하한이며, D/R에서 구동이 필요할 때 45% 미만 출력을 건너뜁니다.
 
 ## 8. 자동변속기
 
@@ -370,9 +375,9 @@ RPM/속도 눈금, 숫자, 바늘은 모두 동일한 270도 수학적 스케일
 
 - ESC startup neutral handshake: 1500us for 3 seconds
 - ESC forward range widened to 1540–2000us
-- active electronic brake request added on physical ESC output
+- physical brake request now cuts ESC drive to neutral; reverse PWM is never used as a brake
 - full-brake virtual deceleration increased
-- steering center trim +45us added
+- steering center trim is adjustable live from the dashboard and saved on the laptop
 - requested header / RTT / shift-lock / drive-ready text UI removed
 - `/health` now exposes the actual ESC pulse and ESC mode for diagnosis
 

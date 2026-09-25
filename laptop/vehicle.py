@@ -436,8 +436,9 @@ class VehicleModel:
         if speed < 0.05:
             return 0.0
 
-        x = clamp(speed / max(1e-6, reference), 0.0, 1.0)
         minimum = float(self.m["min_effective_drive"])
+        creep_speed = float(self.v["creep_target_kph"])
+        x = clamp((speed - creep_speed) / max(1e-6, reference - creep_speed), 0.0, 1.0)
         mapped = minimum + (1.0 - minimum) * (x ** float(self.m["speed_curve_exponent"]))
 
         return mapped if self.selector == "D" else -mapped
@@ -508,15 +509,22 @@ class VehicleModel:
 
         self.speed_mps = new_speed
 
-        motor_target = self._motor_target_from_speed()
-        motor_rate = (
-            float(self.m["output_slew_up_per_s"])
-            if abs(motor_target) > abs(self.motor)
-            else float(self.m["output_slew_down_per_s"])
-        )
-        self.motor = approach(self.motor, motor_target, motor_rate, dt)
-        if abs(self.motor) < 0.002:
+        if brake >= 0.04:
+            # Brakes cut physical drive immediately; reverse is only requested
+            # by selecting R, never by increasing the brake pedal.
             self.motor = 0.0
+        else:
+            motor_target = self._motor_target_from_speed()
+            motor_rate = (
+                float(self.m["output_slew_up_per_s"])
+                if abs(motor_target) > abs(self.motor)
+                else float(self.m["output_slew_down_per_s"])
+            )
+            self.motor = approach(self.motor, motor_target, motor_rate, dt)
+            if abs(self.motor) < 0.002:
+                self.motor = 0.0
+            elif motor_target and abs(self.motor) < float(self.m["min_effective_drive"]):
+                self.motor = math.copysign(float(self.m["min_effective_drive"]), motor_target)
 
         self.last_pedal = self.effective_throttle
         self.last_raw_pedal = pedal

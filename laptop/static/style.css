@@ -171,4 +171,10 @@ body.ignition-on .illuminated{filter:none;opacity:1}
 .single-readout>div+div{border-left:0}
 .clean-footer{justify-content:flex-start;gap:16px;margin-top:12px}
 .clean-footer .ignition-button{flex:0 0 auto}
+.alignment-control{display:flex;align-items:center;gap:7px;margin-left:auto;padding:8px 10px;border:1px solid rgba(124,166,188,.22);border-radius:8px;background:#081118;color:#9eb9c7}
+.alignment-control span{font-size:8px;letter-spacing:.12em;margin-right:5px}
+.alignment-control b{min-width:49px;text-align:center;font-size:10px;font-variant-numeric:tabular-nums;color:#d6eef9}
+.alignment-control button{width:26px;height:26px;border:1px solid rgba(124,166,188,.35);border-radius:5px;background:#11222d;color:#d6eef9;cursor:pointer;font-size:16px}
+.alignment-control button:hover{background:#1b3c50}
+@media(max-width:600px){.clean-footer{flex-wrap:wrap}.alignment-control{margin-left:0;width:100%;justify-content:center}}
 .clean-camera-topline{right:auto}

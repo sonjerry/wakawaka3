@@ -92,19 +92,24 @@ class InputManager:
             self.mode = "keyboard"
             return None
 
-    def _keyboard(self, dt):
+    def _keyboard(self, dt, signed_speed_kph=0.0):
         c = self.cfg["keyboard"]
         tt, bt = (1.0 if self.keys["w"] else 0.0), (1.0 if self.keys["s"] else 0.0)
         self.k_throttle = approach(self.k_throttle, tt, c["throttle_rise_per_s"] if tt else c["throttle_fall_per_s"], dt)
         self.k_brake = approach(self.k_brake, bt, c["brake_rise_per_s"] if bt else c["brake_fall_per_s"], dt)
         st = -1.0 if self.keys["a"] and not self.keys["d"] else (1.0 if self.keys["d"] and not self.keys["a"] else 0.0)
-        self.k_steer = approach(self.k_steer, st, c["steering_rise_per_s"] if st else c["steering_return_per_s"], dt)
+        if st:
+            self.k_steer = approach(self.k_steer, st, c["steering_rise_per_s"], dt)
+        elif signed_speed_kph > float(c.get("steering_self_center_start_kph", 0.5)):
+            full = float(c.get("steering_self_center_full_kph", 20.0))
+            rate = float(c["steering_return_per_s"]) * clamp(signed_speed_kph / max(0.1, full), 0.0, 1.0)
+            self.k_steer = approach(self.k_steer, 0.0, rate, dt)
         return {"steering": self.k_steer, "throttle": self.k_throttle, "brake": self.k_brake}
 
-    def update(self, dt):
+    def update(self, dt, signed_speed_kph=0.0):
         self._scan()
         if self.device:
             v = self._wheel()
             if v:
                 return {**v, "mode": "wheel", "device": self.device_name, "raw_axes": self.raw_axes}
-        return {**self._keyboard(dt), "mode": "keyboard", "device": None, "raw_axes": self.raw_axes}
+        return {**self._keyboard(dt, signed_speed_kph), "mode": "keyboard", "device": None, "raw_axes": self.raw_axes}

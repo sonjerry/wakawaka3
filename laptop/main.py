@@ -1,5 +1,7 @@
 import asyncio
 import json
+import math
+import os
 import time
 
 from aiohttp import web, WSMsgType
@@ -23,6 +25,16 @@ class App:
         self.input = InputManager(cfg["input"])
         self.vehicle = VehicleModel(cfg["vehicle"])
         self.pi = PiClient(self.cfg["pi"])
+        self.alignment_path = ROOT / "config" / "steering_alignment.json"
+        self.steering_trim_us = float(cfg["pi_hardware"]["steering"].get("center_trim_us", 0))
+        if self.alignment_path.exists():
+            try:
+                saved = json.loads(self.alignment_path.read_text(encoding="utf-8"))
+                trim = float(saved["steering_trim_us"])
+                if math.isfinite(trim) and -150 <= trim <= 150:
+                    self.steering_trim_us = trim
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
 
         self.clients = set()
         self.keys = {k: False for k in "wasd"}
@@ -47,6 +59,18 @@ class App:
     def set_notice(self, text, duration=2.2):
         self.ui_notice = text
         self.notice_until = time.monotonic() + duration
+
+    def set_steering_trim(self, value):
+        try:
+            trim = float(value)
+        except (TypeError, ValueError):
+            return
+        if not math.isfinite(trim) or not -150 <= trim <= 150:
+            return
+        self.steering_trim_us = round(trim / 5) * 5
+        temporary = self.alignment_path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps({"steering_trim_us": self.steering_trim_us}), encoding="utf-8")
+        os.replace(temporary, self.alignment_path)
 
     def ignition_payload(self):
         return {
@@ -149,6 +173,9 @@ class App:
                 elif msg_type == "ignition_toggle":
                     self.toggle_ignition()
 
+                elif msg_type == "steering_trim":
+                    self.set_steering_trim(data.get("value_us"))
+
                 elif msg_type == "estop":
                     self.vehicle.shutdown()
                     self.ignition_state = "off"
@@ -156,6 +183,9 @@ class App:
                     self.set_notice("EMERGENCY STOP", duration=3.0)
         finally:
             self.clients.discard(ws)
+            if not self.clients:
+                self.keys = {k: False for k in "wasd"}
+                self.input.set_keyboard(self.keys)
 
         return ws
 
@@ -164,6 +194,7 @@ class App:
         video = self.cfg["video"]
         return web.json_response({
             "pi_host": host,
+            "steering_trim_us": self.steering_trim_us,
             "video_url": (
                 f"http://{host}:{video['webrtc_port']}/{video['path']}"
                 "?controls=false&muted=true&autoplay=true&playsInline=true"
@@ -198,7 +229,7 @@ class App:
             dt = min(0.05, max(0.0001, started - last))
             last = started
 
-            self.latest_input = self.input.update(dt)
+            self.latest_input = self.input.update(dt, self.vehicle.speed_kph)
 
             if (
                 self.ignition_state == "boot"
@@ -263,6 +294,7 @@ class App:
                 "seq": self.seq,
                 "ts": time.time(),
                 "steering": steering_out,
+                "steering_trim_us": self.steering_trim_us,
                 "motor": motor_out,
                 "brake": brake_out,
                 "signed_speed_kph": self.state.get("signed_speed_kph", 0.0),
@@ -282,6 +314,7 @@ class App:
             packet = {
                 "type": "state",
                 "vehicle": self.state,
+                "steering_trim_us": self.steering_trim_us,
                 "input": self.latest_input,
                 "link": {
                     "pi_connected": self.pi.connected,
