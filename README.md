@@ -102,6 +102,15 @@ esc:
 ./scripts/run_pi.sh
 ```
 
+최신 `main`을 받은 뒤 바로 실행하려면 Pi의 프로젝트 폴더에서:
+
+```bash
+bash scripts/update_and_run_pi.sh
+```
+
+갱신에 실패하면 서버를 실행하지 않습니다. 이미 서버가 실행 중이라면 기존
+터미널에서 `Ctrl+C`로 종료한 뒤 위 명령을 실행하세요.
+
 상태 확인:
 
 ```text
