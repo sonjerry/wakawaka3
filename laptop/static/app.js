@@ -91,7 +91,7 @@ function render(packet){
   const driveReady=!!link.drive_ready;
 
   let rpm=(vehicle.rpm||0)/1000,speed=vehicle.speed_kph||0,steer=Math.round((vehicle.steering||0)*35);
-  let throttle=vehicle.throttle||0,brake=vehicle.brake||0,motor=Math.abs(vehicle.motor_output||0);
+  let throttle=vehicle.throttle||0,brake=vehicle.brake||0,motor=link.pi_connected?(pi.esc_output||0):0;
   if(boot){
     const t=clamp(ignition.elapsed_s/Math.max(.1,ignition.boot_duration_s),0,1);
     const sweep=t<.48?t/.48:clamp(1-((t-.48)/.52),0,1);
@@ -104,8 +104,9 @@ function render(packet){
   setGauge('rpmNeedle','rpmArc',rpm*1000,0,6500);setGauge('speedNeedle','speedArc',speed,0,200);
 
   const tp=Math.round(throttle*100),bp=Math.round(brake*100),mp=Math.round(motor*100);
-  $('throttleBar').style.width=`${tp}%`;$('brakeBar').style.width=`${bp}%`;$('motorBar').style.width=`${mp}%`;
+  $('throttleBar').style.width=`${tp}%`;$('brakeBar').style.width=`${bp}%`;$('motorBar').style.width=`${Math.abs(mp)}%`;
   $('throttleValue').textContent=`${tp}%`;$('brakeValue').textContent=`${bp}%`;$('motorValue').textContent=`${mp}%`;
+  $('motorValue').title=`${pi.esc_pulse_us??'—'} µs · ${pi.esc_mode??'OFFLINE'} · ${pi.selector??'P'}`;
 
   const wheelAngle=steer*.82;$('frontLeftWheel').setAttribute('transform',`rotate(${wheelAngle} 78 60)`);$('frontRightWheel').setAttribute('transform',`rotate(${wheelAngle} 182 60)`);
   const currentSelector=on?vehicle.selector:'P';

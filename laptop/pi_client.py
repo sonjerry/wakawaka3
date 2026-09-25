@@ -23,6 +23,7 @@ class PiClient:
         while not self.stop:
             try:
                 async with self.session.ws_connect(self.url,heartbeat=1,autoping=True,timeout=3) as ws:
+                    self.last_telemetry={}
                     self.ws=ws; self.connected=True
                     async for msg in ws:
                         if msg.type==WSMsgType.TEXT:
@@ -36,7 +37,7 @@ class PiClient:
             except Exception:
                 pass
             finally:
-                self.connected=False; self.ws=None
+                self.connected=False; self.ws=None; self.last_telemetry={}
             await asyncio.sleep(float(self.cfg["reconnect_seconds"]))
 
     async def send(self,payload):

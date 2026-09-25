@@ -1,3 +1,4 @@
+import math
 import time
 from smbus2 import SMBus
 
@@ -129,6 +130,7 @@ class ESCController:
         self.ready = False
         self.started_at = time.monotonic()
         self.direction_block_until = 0.0
+        self.selector = "P"
         self.last_pulse_us = float(self.cfg["neutral_us"])
         self.last_mode = "ARM_NEUTRAL"
         self.write_neutral()
@@ -139,6 +141,14 @@ class ESCController:
         return self.ready
 
     def _write_pulse(self, pulse_us, mode):
+        neutral = float(self.cfg["neutral_us"])
+        # Final direction boundary, including residual output during shifts.
+        if self.selector == "D":
+            pulse_us = clamp(pulse_us, neutral, float(self.cfg["forward_max_us"]))
+        elif self.selector == "R":
+            pulse_us = clamp(pulse_us, float(self.cfg["reverse_max_us"]), neutral)
+        else:
+            pulse_us = neutral
         self.last_pulse_us = float(pulse_us)
         self.last_mode = mode
         self.pca.pulse_us(self.cfg["channel"], self.last_pulse_us)
@@ -168,61 +178,82 @@ class ESCController:
 
     def _pulse_for_drive(self, value):
         value = clamp(float(value), -1.0, 1.0)
-        if self.cfg.get("invert_direction", False):
-            value = -value
         neutral = float(self.cfg["neutral_us"])
         if abs(value) <= float(self.cfg["output_deadband"]):
             return neutral
-        # The dashboard's 7% creep command must reproduce the pulse that the
-        # previous version sent at 45% physical ESC output. Keep display and
-        # receiver-signal percentages separate.
+        # Direct calibration anchors: zero=neutral, 7%=measured creep,
+        # 100%=endpoint. Sub-creep output allows smooth coast/brake decay.
         magnitude = abs(value)
         logical_creep = float(self.cfg["creep_command"])
-        physical_creep = float(self.cfg["creep_signal_fraction"])
-        calibrated = physical_creep + max(0.0, magnitude - logical_creep) * (1.0 - physical_creep) / (1.0 - logical_creep)
-        calibrated = clamp(calibrated, physical_creep, 1.0)
-        if value > 0:
-            lo = float(self.cfg["forward_min_us"])
-            hi = float(self.cfg["forward_max_us"])
-            return lo + calibrated * (hi - lo)
-        lo = float(self.cfg["reverse_min_us"])
-        hi = float(self.cfg["reverse_max_us"])
-        return lo + calibrated * (hi - lo)
+        direction = "forward" if value > 0 else "reverse"
+        creep = float(self.cfg[f"{direction}_creep_us"])
+        endpoint = float(self.cfg[f"{direction}_max_us"])
+        if magnitude <= logical_creep:
+            return neutral + (creep - neutral) * magnitude / logical_creep
+        return creep + (endpoint - creep) * (magnitude - logical_creep) / (1.0 - logical_creep)
 
-    def update(self, target, brake, dt):
+    def update(self, target, brake, dt, selector="P"):
         self.service_startup()
 
-        if not self.ready or not self.drive_enabled:
+        try:
+            target, brake, dt = float(target), float(brake), float(dt)
+            if not all(math.isfinite(v) for v in (target, brake, dt)):
+                raise ValueError("non-finite control")
+        except (TypeError, ValueError):
+            self.value = 0.0
+            self.write_neutral()
+            return
+        now = time.monotonic()
+        if selector != self.selector:
+            self.selector = selector if selector in {"P", "N", "D", "R"} else "P"
+            self.value = 0.0
+            self.direction_block_until = now + float(self.cfg["direction_neutral_hold_s"])
+            self.write_neutral()
+
+        if not self.ready or not self.drive_enabled or self.selector not in {"D", "R"}:
             self.value = 0.0
             self.write_neutral()
             return
 
         brake = clamp(float(brake), 0.0, 1.0)
-        if brake >= float(self.cfg.get("brake_deadband", 0.04)):
-            # Virtual speed is not a physical wheel-speed measurement. Sending
-            # reverse PWM here can drive the car backward instead of braking.
-            self.value = 0.0
-            self._write_pulse(float(self.cfg["neutral_us"]), "BRAKE_NEUTRAL")
+        if brake > float(self.cfg["brake_deadband"]):
+            # No-brake ESC: reduce pulse itself, never command opposing torque.
+            amount = (brake - self.cfg["brake_deadband"]) / (1.0 - self.cfg["brake_deadband"])
+            rate = self.cfg["brake_decay_min_us_per_s"] + (
+                self.cfg["brake_decay_max_us_per_s"] - self.cfg["brake_decay_min_us_per_s"]
+            ) * amount ** self.cfg["brake_decay_exponent"]
+            pulse = approach(self.last_pulse_us, float(self.cfg["neutral_us"]), rate, clamp(dt, 0.0, 0.05))
+            self.value = self._drive_for_pulse(pulse)
+            self._write_pulse(pulse, "BRAKE_DECAY" if self.value else "NEUTRAL")
             return
 
         target = clamp(float(target), -1.0, 1.0)
-        target_dir = 1 if target > 0.03 else (-1 if target < -0.03 else 0)
-        current_dir = 1 if self.value > 0.03 else (-1 if self.value < -0.03 else 0)
-        now = time.monotonic()
-
-        if current_dir and target_dir and current_dir != target_dir:
+        if (self.selector == "D" and target < 0) or (self.selector == "R" and target > 0):
             target = 0.0
-            self.direction_block_until = max(
-                self.direction_block_until,
-                now + float(self.cfg["direction_neutral_hold_s"]),
-            )
+            self.value = 0.0
         if now < self.direction_block_until:
             target = 0.0
 
-        self.value = approach(self.value, target, float(self.cfg["output_slew_per_s"]), dt)
-        if abs(self.value) < 0.01:
-            self.value = 0.0
-        self._write_pulse(self._pulse_for_drive(self.value), "DRIVE" if self.value else "NEUTRAL")
+        if target == 0.0 and now < self.direction_block_until:
+            self.write_neutral()
+            return
+        if (self.selector == "D" and self.last_pulse_us < self.cfg["neutral_us"]) or (self.selector == "R" and self.last_pulse_us > self.cfg["neutral_us"]):
+            self.write_neutral()
+        pulse = approach(self.last_pulse_us, self._pulse_for_drive(target), float(self.cfg["drive_slew_us_per_s"]), clamp(dt, 0.0, 0.05))
+        self.value = self._drive_for_pulse(pulse)
+        self._write_pulse(pulse, "DRIVE" if self.value else "NEUTRAL")
+
+    def _drive_for_pulse(self, pulse):
+        neutral = float(self.cfg["neutral_us"])
+        if pulse == neutral:
+            return 0.0
+        direction = "forward" if pulse > neutral else "reverse"
+        distance = abs(pulse - neutral)
+        creep = abs(float(self.cfg[f"{direction}_creep_us"]) - neutral)
+        end = abs(float(self.cfg[f"{direction}_max_us"]) - neutral)
+        command = float(self.cfg["creep_command"])
+        magnitude = command * distance / creep if distance <= creep else command + (1-command) * (distance-creep)/(end-creep)
+        return math.copysign(clamp(magnitude, 0.0, 1.0), pulse-neutral)
 
 
 class Hardware:

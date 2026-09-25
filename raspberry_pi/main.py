@@ -1,10 +1,13 @@
 import asyncio
 import json
+import math
 import time
 from aiohttp import web, WSMsgType
 from config import load_config
 from hardware import Hardware
 from telemetry import cpu_temp, throttled
+
+CONTROL_REVISION = 3
 
 
 class Server:
@@ -26,6 +29,10 @@ class Server:
 
     def esc_status(self):
         return {
+            "control_revision": CONTROL_REVISION,
+            "selector": self.hw.esc.selector,
+            "received_motor": self.payload.get("motor"),
+            "received_brake": self.payload.get("brake"),
             "esc_ready": self.hw.esc.ready,
             "armed": self.hw.esc.armed,
             "drive_enabled": self.hw.esc.drive_enabled,
@@ -59,7 +66,18 @@ class Server:
                     data = json.loads(msg.data)
                 except Exception:
                     continue
+                if not isinstance(data, dict):
+                    continue
                 if data.get("type") == "control":
+                    try:
+                        valid = data.get("control_revision") == CONTROL_REVISION and data.get("selector") in {"P", "N", "D", "R"}
+                        valid = valid and all(math.isfinite(float(data.get(k, 0))) for k in ("motor", "brake", "steering"))
+                    except (ValueError, TypeError):
+                        valid = False
+                    if not valid:
+                        self.last_cmd = 0.0
+                        self.fail()
+                        continue
                     self.payload = data
                     self.last_seq = data.get("seq")
                     self.last_cmd = time.monotonic()
@@ -92,17 +110,11 @@ class Server:
                 self.hw.steering.update(float(p.get("steering", 0.0)), dt)
 
                 motor = float(p.get("motor", 0.0))
-                if selector in {"P", "N"}:
-                    motor = 0.0
-                elif selector == "R":
-                    motor = -abs(motor)
-                else:
-                    motor = abs(motor)
-
                 self.hw.esc.update(
                     target=motor,
                     brake=float(p.get("brake", 0.0)),
                     dt=dt,
+                    selector=selector,
                 )
 
             await asyncio.sleep(max(0.0, 0.01 - (time.monotonic() - start)))

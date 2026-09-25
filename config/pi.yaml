@@ -12,7 +12,8 @@ steering:
   # Measured straight ahead at +25° on the old ±35° dashboard scale,
   # with the saved trim at 0: 1500 + (25/35) * (1900-1500) ≈ 1786µs.
   center_us: 1786
-  left_us: 1100
+  # Equal travel around the calibrated center, within previously used bounds.
+  left_us: 1672
   right_us: 1900
   invert: false
   max_slew_per_s: 5.5
@@ -20,19 +21,20 @@ steering:
 esc:
   channel: 1
   neutral_us: 1500
-  forward_min_us: 1540
+  forward_creep_us: 1864
   forward_max_us: 2000
-  reverse_min_us: 1460
+  reverse_creep_us: 1253
   reverse_max_us: 1000
-  invert_direction: false
-  output_deadband: 0.025
+  output_deadband: 0.002
   creep_command: 0.07
-  creep_signal_fraction: 0.45
   startup_neutral_s: 3.0
   direction_neutral_hold_s: 0.30
-  output_slew_per_s: 3.5
-  # Braking cuts drive to neutral; no reverse PWM without wheel-speed feedback.
+  drive_slew_us_per_s: 700
+  # No reverse braking: pedal controls pulse decay toward neutral (us/second).
   brake_deadband: 0.04
+  brake_decay_min_us_per_s: 40
+  brake_decay_max_us_per_s: 900
+  brake_decay_exponent: 1.3
 
 failsafe:
   command_timeout_s: 0.30

@@ -136,6 +136,8 @@ class VehicleModel:
             if selector != self.selector and speed > 1.0:
                 return False
 
+        if selector != self.selector:
+            self.motor = 0.0
         self.selector = selector
         if selector == "D":
             self.gear = max(1, min(9, self.gear))
@@ -476,6 +478,8 @@ class VehicleModel:
 
         drive_force = self._engine_drive_force(self.effective_throttle, now)
         drive_force += self._creep_force(self.effective_throttle, brake)
+        if brake > float(self.m["brake_deadband"]):
+            drive_force = 0.0
         resist_force = self._resistance_force(self.effective_throttle)
         brake_force = self._brake_force(brake)
 
@@ -509,9 +513,7 @@ class VehicleModel:
 
         self.speed_mps = new_speed
 
-        if brake >= 0.04:
-            # Brakes cut physical drive immediately; reverse is only requested
-            # by selecting R, never by increasing the brake pedal.
+        if self.selector in {"P", "N"}:
             self.motor = 0.0
         else:
             motor_target = self._motor_target_from_speed()
@@ -523,7 +525,7 @@ class VehicleModel:
             self.motor = approach(self.motor, motor_target, motor_rate, dt)
             if abs(self.motor) < 0.002:
                 self.motor = 0.0
-            elif motor_target and abs(self.motor) < float(self.m["min_effective_drive"]):
+            elif brake <= self.m["brake_deadband"] and motor_target and abs(self.motor) < float(self.m["min_effective_drive"]):
                 self.motor = math.copysign(float(self.m["min_effective_drive"]), motor_target)
 
         self.last_pedal = self.effective_throttle

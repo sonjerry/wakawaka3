@@ -11,6 +11,7 @@ from pi_client import PiClient
 
 
 BOOT_DURATION_S = 2.35
+CONTROL_REVISION = 3
 START_BRAKE_THRESHOLD = 0.20
 GEAR_BRAKE_THRESHOLD = 0.18
 STOP_SPEED_THRESHOLD_KPH = 0.5
@@ -59,7 +60,8 @@ class App:
         return self.ignition_state == "on"
 
     def pi_drive_ready(self):
-        return bool(self.pi.connected and self.pi.last_telemetry.get("armed", False))
+        return bool(self.pi.connected and self.pi.last_telemetry.get("armed", False)
+                    and self.pi.last_telemetry.get("control_revision") == CONTROL_REVISION)
 
     def toggle_ignition(self):
         brake = float(self.latest_input.get("brake", 0.0))
@@ -184,6 +186,8 @@ class App:
             self.ui_notice = "SYSTEM CHECK"
         elif not self.pi.connected:
             self.ui_notice = "CONTROL LINK OFFLINE"
+        elif self.pi.last_telemetry.get("control_revision") != CONTROL_REVISION:
+            self.ui_notice = "UPDATE BOTH LAPTOP AND PI"
         elif not self.pi.last_telemetry.get("armed", False):
             self.ui_notice = "DRIVE SYSTEM ARMING"
         elif brake >= GEAR_BRAKE_THRESHOLD:
@@ -240,7 +244,7 @@ class App:
             self.seq += 1
 
             ignition_on = self.ignition_is_on()
-            pi_armed = bool(self.pi.last_telemetry.get("armed", False))
+            pi_armed = self.pi_drive_ready()
 
             # Pi must arm in P/N with neutral motor. Even if the user selects
             # D/R immediately after startup, keep the hardware command in P
@@ -263,6 +267,7 @@ class App:
 
             await self.pi.send({
                 "type": "control",
+                "control_revision": CONTROL_REVISION,
                 "seq": self.seq,
                 "ts": time.time(),
                 "steering": steering_out,
@@ -270,7 +275,7 @@ class App:
                 "brake": brake_out,
                 "signed_speed_kph": self.state.get("signed_speed_kph", 0.0),
                 "selector": selector_out,
-                "armed": ignition_on,
+                "armed": ignition_on and pi_armed,
             })
 
             await asyncio.sleep(max(0.0, period - (time.monotonic() - started)))
