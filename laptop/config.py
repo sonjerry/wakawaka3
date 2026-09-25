@@ -12,5 +12,4 @@ def load_all():
         "laptop": load_yaml("config/laptop.yaml"),
         "input": load_yaml("config/input.yaml"),
         "vehicle": load_yaml("config/vehicle.yaml"),
-        "pi_hardware": load_yaml("config/pi.yaml"),
     }

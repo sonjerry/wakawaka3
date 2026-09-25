@@ -9,8 +9,9 @@ pca9685:
 
 steering:
   channel: 0
-  center_us: 1500
-  center_trim_us: 45
+  # Measured straight ahead at +25° on the old ±35° dashboard scale,
+  # with the saved trim at 0: 1500 + (25/35) * (1900-1500) ≈ 1786µs.
+  center_us: 1786
   left_us: 1100
   right_us: 1900
   invert: false
@@ -25,6 +26,8 @@ esc:
   reverse_max_us: 1000
   invert_direction: false
   output_deadband: 0.025
+  creep_command: 0.07
+  creep_signal_fraction: 0.45
   startup_neutral_s: 3.0
   direction_neutral_hold_s: 0.30
   output_slew_per_s: 3.5

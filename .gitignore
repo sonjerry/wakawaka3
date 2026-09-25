@@ -3,4 +3,3 @@
 __pycache__/
 *.pyc
 config/steering_alignment.json
-config/steering_alignment.json.tmp

@@ -89,8 +89,6 @@ class Server:
                 selector = str(p.get("selector", "P"))
                 drive_enabled = bool(p.get("armed", False))
                 self.hw.esc.set_drive_enabled(drive_enabled)
-                if "steering_trim_us" in p:
-                    self.hw.steering.set_center_trim_us(p["steering_trim_us"])
                 self.hw.steering.update(float(p.get("steering", 0.0)), dt)
 
                 motor = float(p.get("motor", 0.0))

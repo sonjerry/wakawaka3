@@ -43,15 +43,15 @@ class ControlTests(unittest.TestCase):
             esc.update(-0.6, brake, 0.1)
             self.assertEqual(pca.outputs[-1], (1, 1500))
 
-    def test_creep_uses_measured_45_percent_floor_and_brake_cuts_it(self):
+    def test_creep_displays_seven_percent_and_brake_cuts_it(self):
         car = VehicleModel(config("vehicle.yaml"))
         car.power_on()
         self.assertTrue(car.set_selector("D"))
         for _ in range(30):
             state = car.update(0.0, 0.0, 0.0, 0.05)
         self.assertGreater(state["speed_kph"], 0)
-        self.assertGreaterEqual(state["motor_output"], 0.45)
-        self.assertLess(state["motor_output"], 0.5)
+        self.assertGreaterEqual(state["motor_output"], 0.07)
+        self.assertLess(state["motor_output"], 0.10)
         state = car.update(0.0, 1.0, 0.0, 0.05)
         self.assertEqual(state["motor_output"], 0.0)
         self.assertGreaterEqual(state["signed_speed_kph"], 0)
@@ -70,12 +70,20 @@ class ControlTests(unittest.TestCase):
         self.assertGreater(controls.k_steer, left)
         self.assertLess(controls.k_steer, 0.0)
 
-    def test_alignment_updates_real_center_pulse(self):
+    def test_seven_percent_creep_reproduces_old_45_percent_pulse(self):
+        esc = ESCController(FakePCA(), config("pi.yaml"))
+        self.assertEqual(esc._pulse_for_drive(0.07), 1747.0)
+        self.assertEqual(esc._pulse_for_drive(-0.07), 1253.0)
+        self.assertEqual(esc._pulse_for_drive(0.0), 1500.0)
+        self.assertEqual(esc._pulse_for_drive(1.0), 2000.0)
+
+    def test_observed_25_degree_alignment_is_new_neutral(self):
         pca = FakePCA()
         steering = SteeringController(pca, config("pi.yaml"))
-        steering.set_center_trim_us(-20)
         steering.center()
-        self.assertEqual(pca.outputs[-1], (0, 1480.0))
+        self.assertEqual(pca.outputs[-1], (0, 1786.0))
+        steering.update(0.0, 0.1)
+        self.assertEqual(pca.outputs[-1], (0, 1786.0))
 
 
 if __name__ == "__main__":

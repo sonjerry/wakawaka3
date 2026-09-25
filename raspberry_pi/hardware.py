@@ -1,4 +1,3 @@
-import math
 import time
 from smbus2 import SMBus
 
@@ -94,14 +93,6 @@ class SteeringController:
     def center_pulse_us(self):
         return float(self.cfg["center_us"]) + float(self.cfg.get("center_trim_us", 0.0))
 
-    def set_center_trim_us(self, trim_us):
-        try:
-            trim = float(trim_us)
-        except (TypeError, ValueError):
-            return
-        if math.isfinite(trim):
-            self.cfg["center_trim_us"] = clamp(trim, -150.0, 150.0)
-
     def update(self, target, dt):
         if self.cfg.get("invert"):
             target = -target
@@ -182,14 +173,21 @@ class ESCController:
         neutral = float(self.cfg["neutral_us"])
         if abs(value) <= float(self.cfg["output_deadband"]):
             return neutral
+        # The dashboard's 7% creep command must reproduce the pulse that the
+        # previous version sent at 45% physical ESC output. Keep display and
+        # receiver-signal percentages separate.
+        magnitude = abs(value)
+        logical_creep = float(self.cfg["creep_command"])
+        physical_creep = float(self.cfg["creep_signal_fraction"])
+        calibrated = physical_creep + max(0.0, magnitude - logical_creep) * (1.0 - physical_creep) / (1.0 - logical_creep)
+        calibrated = clamp(calibrated, physical_creep, 1.0)
         if value > 0:
             lo = float(self.cfg["forward_min_us"])
             hi = float(self.cfg["forward_max_us"])
-            return lo + value * (hi - lo)
-        mag = abs(value)
+            return lo + calibrated * (hi - lo)
         lo = float(self.cfg["reverse_min_us"])
         hi = float(self.cfg["reverse_max_us"])
-        return lo + mag * (hi - lo)
+        return lo + calibrated * (hi - lo)
 
     def update(self, target, brake, dt):
         self.service_startup()
